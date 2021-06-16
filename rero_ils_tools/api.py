@@ -16,10 +16,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Test class."""
+"""Example class."""
 
-class Test:
+class Example:
 
     @classmethod
-    def test(cls):
-        return 'called test'
+    def example(cls):
+        return 'called example'
