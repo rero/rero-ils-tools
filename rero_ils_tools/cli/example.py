@@ -22,7 +22,7 @@ import click
 
 from flask.cli import with_appcontext
 from flask import current_app
-from .api import Test
+from ..api import Example
 
 
 @click.command()
@@ -30,4 +30,5 @@ from .api import Test
 @click.argument('arg')
 def app(arg):
     """This script returns a simple flask app."""
-    click.secho(f'app: {current_app} with {arg}: {Test.test()}', fg='green')
+    click.secho(
+        f'app: {current_app} with {arg}: {Example.example()}', fg='green')
