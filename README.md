@@ -25,6 +25,7 @@ export PATH=$PATH:/data/nfs/ils/rero-ils-tools/rero-ils-tools/scripts/
 
 ```bash
 poetry run tools.py tools update set_circulation_category --help
+poetry run tools.py tools update items --help
 ```
 
 [repo]: https://github.com/rero/rero-ils-tools
