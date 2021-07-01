@@ -24,6 +24,7 @@ from invenio_app.factory import create_app
 
 from .cli.example import app
 from .cli.items.update import items_update
+from .cli.query.query import records_query
 from .cli.update.circ_category import set_circulation_category
 
 
@@ -42,6 +43,12 @@ def update():
     """New update group."""
     pass
 
+@tools.group()
+def search():
+    """New query group."""
+    pass
+
 tools.add_command(app)
 update.add_command(set_circulation_category)
 update.add_command(items_update)
+search.add_command(records_query)
