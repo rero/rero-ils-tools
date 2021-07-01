@@ -56,9 +56,8 @@ def duplicate_emails(verbose):
             check_email(pid, email.lower(), emails, duplicate_emails)
         if add_email:
             check_email(pid, add_email.lower(), emails, duplicate_emails)
-    if len(duplicate_emails):
-        click.secho(f'Patrons with duplicate emails:', fg='red')
-        for key, values in duplicate_emails.items():
+
+    click.secho(f'Patrons with duplicate emails:', fg='red')
+    for key, values in duplicate_emails.items():
+        if len(values):
             click.secho(f'{key} in patrons: {values}', fg='red')
-    else:
-        click.secho(f'No duplicate emails found.', fg='green')
