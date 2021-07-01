@@ -10,15 +10,15 @@ RERO ILS misc tools for data manipulation.
 2. Set the environment variables:
 
 ```bash
-export PYTHONPATH=~/rero-ils-tools export
-PATH=$PATH:~/rero-ils-tools/scripts/
+export PYTHONPATH=~/rero-ils-tools 
+export PATH=${PATH}:${PYTHONPATH}/scripts/
 ```
 
 ### For PODs
 
 ```bash
-export PYTHONPATH=/data/nfs/ils/rero-ils-tools/rero-ils-tools
-export PATH=$PATH:/data/nfs/ils/rero-ils-tools/rero-ils-tools/scripts/
+export PYTHONPATH=/data/nfs/ils/rero-ils-tools/
+export PATH=${PATH}:${PYTHONPATH}/scripts/
 ```
 
 ### Examples
