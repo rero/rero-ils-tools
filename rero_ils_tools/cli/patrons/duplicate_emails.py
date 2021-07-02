@@ -51,6 +51,7 @@ def duplicate_emails(verbose):
     emails = []
     duplicate_emails = []
     duplicate_add_emails = []
+    all_user_ids = list(set(all_user_ids))
     for user_id in all_user_ids:
         user = patron._get_user_by_user_id(user_id)
         email = user.email
