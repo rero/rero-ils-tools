@@ -36,28 +36,41 @@ def duplicate_emails(verbose):
     """
     click.secho(f'Searching patron records for duplicate emails', fg='green')
     
-    def check_email(pid, email, emails, duplicate_emails):
+    def check_email(email, emails, duplicate_emails):
         """Check if email is duplicated."""
-        if email not in emails:
-            emails.append(email)
+        if email.lower() not in emails:
+            emails.append(email.lower())
         else:
-            pid_list = duplicate_emails.get(email, [])
-            pid_list.append(pid)
-            duplicate_emails[email] = pid_list
+            duplicate_emails.append(email)
+
+    all_user_ids = []
+    for pid in Patron.get_all_pids():
+        patron = Patron.get_record_by_pid(pid)
+        all_user_ids.append(patron.get('user_id'))
 
     emails = []
-    duplicate_emails = {}
+    duplicate_emails = []
+    duplicate_add_emails = []
+    for user_id in all_user_ids:
+        user = patron._get_user_by_user_id(user_id)
+        email = user.email
+        if email:
+            check_email(email, emails, duplicate_emails)
+
     for pid in Patron.get_all_pids():
         patron = Patron.get_record_by_pid(pid)
         add_email = patron.patron.get('additional_communication_email')
-        user = patron._get_user_by_user_id(patron.get('user_id'))
-        email = user.email
-        if email:
-            check_email(pid, email.lower(), emails, duplicate_emails)
         if add_email:
-            check_email(pid, add_email.lower(), emails, duplicate_emails)
+            check_email(email, emails, duplicate_add_emails)
 
-    click.secho(f'Patrons with duplicate emails:', fg='red')
-    for key, values in duplicate_emails.items():
-        if len(values) > 1:
-            click.secho(f'{key} in patrons: {values}', fg='red')
+    duplicate_emails = list(set(duplicate_emails))
+    if duplicate_emails:
+        click.secho(f'Duplicates in field email:', fg='red')
+        for value in duplicate_emails:
+            click.secho(f'{value}', fg='red')
+
+    duplicate_add_emails = list(set(duplicate_add_emails))
+    if duplicate_add_emails:
+        click.secho(f'Duplicates in field additional_communication:', fg='red')
+        for value in duplicate_add_emails:
+            click.secho(f'{value}', fg='red')
