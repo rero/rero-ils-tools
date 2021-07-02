@@ -59,5 +59,5 @@ def duplicate_emails(verbose):
 
     click.secho(f'Patrons with duplicate emails:', fg='red')
     for key, values in duplicate_emails.items():
-        if len(values):
+        if len(values) > 1:
             click.secho(f'{key} in patrons: {values}', fg='red')
