@@ -26,7 +26,7 @@ export PATH=${PATH}:${PYTHONPATH}/scripts/
 ```bash
 poetry run tools.py tools update set_circulation_category --help
 poetry run tools.py tools update items --help
-
+poetry run tools.py tools replace items --help
 ```
 ### To extract items based on `query.txt` search and using the given model
 ```bash

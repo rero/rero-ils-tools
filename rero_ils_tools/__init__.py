@@ -23,6 +23,7 @@ from flask.cli import FlaskGroup
 from invenio_app.factory import create_app
 
 from .cli.example import app
+from .cli.items.replace import items_replace
 from .cli.items.update import items_update
 from .cli.patrons.duplicate_emails import duplicate_emails
 from .cli.query.query import records_query
@@ -45,6 +46,12 @@ def update():
     pass
 
 @tools.group()
+def replace():
+    """New update group."""
+    pass
+
+
+@tools.group()
 def search():
     """New query group."""
     pass
@@ -56,6 +63,9 @@ def patrons():
 
 tools.add_command(app)
 update.add_command(set_circulation_category)
+
 update.add_command(items_update)
+replace.add_command(items_replace)
+
 search.add_command(records_query)
 patrons.add_command(duplicate_emails)
