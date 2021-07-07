@@ -91,6 +91,10 @@ def records_query(infile, full, model, record_type, output, verbose):
                     if key == 'exclude':
                         for field in values:
                             record.pop(field, None)
+                    elif key == 'include':
+                        pass
+                    else:
+                        record[key] = values
                 outfile.write(record)
             else:
                 extracted_record = {}
@@ -99,6 +103,8 @@ def records_query(infile, full, model, record_type, output, verbose):
                         for field in values:
                             if record.get(field):
                                 extracted_record[field] = record[field]
+                    elif key == 'exclude':
+                        pass
                     else:
                         extracted_record[key] = values
                 outfile.write(extracted_record)
