@@ -87,11 +87,14 @@ def records_query(infile, full, model, record_type, output, verbose):
                 click.echo(
                     f'{count: <8} extract record {record.pid}:{record.id}')
             if full:
+                for key, values in model_json.items():
+                    if key == 'exclude':
+                        for field in values:
+                            record.pop(field, None)
                 outfile.write(record)
             else:
                 extracted_record = {}
                 for key, values in model_json.items():
-                    fields = []
                     if key == 'include':
                         for field in values:
                             if record.get(field):

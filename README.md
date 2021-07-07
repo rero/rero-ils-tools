@@ -34,6 +34,7 @@ poetry run tools.py tools search  query -t item  query.txt -o items.json -v -m m
 query.txt: organisation.pid:1 AND document.pid:4 AND item_type.pid:4
 model.json: {
     "include": ["pid", "location"],
+    "exclude": ["temporary_item_type"],
     "item_type": {
         "$ref": "https://bib.rero.ch/api/item_types/6"
       }
