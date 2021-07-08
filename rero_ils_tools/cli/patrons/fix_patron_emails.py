@@ -20,6 +20,8 @@
 
 from __future__ import absolute_import, print_function
 
+import string
+
 import click
 from flask import current_app
 from flask.cli import with_appcontext
@@ -40,14 +42,9 @@ def fix_patron_emails(verbose):
     
     out_file = JsonWriter('list_patrons_with_emails_to_fix.json')
 
-    all_user_ids = []
     for pid in Patron.get_all_pids():
         patron = Patron.get_record_by_pid(pid)
-        all_user_ids.append(patron.get('user_id'))
-
-    all_user_ids = list(set(all_user_ids))
-
-    for user_id in all_user_ids:
+        user_id = patron.get('user_id')
         print('user_id: ', user_id)
         user = User.get_by_id(user_id)
         data = user.dumpsMetadata()
@@ -61,6 +58,6 @@ def fix_patron_emails(verbose):
             for patron in Patron.get_patrons_by_user(user.user):
                 if patron.get('patron') and not patron.get(
                     'patron', {}).get('additional_communication_email'):
-                    patron['patron']['additional_communication_email'] = email
+                    patron['patron']['additional_communication_email'] = email.rstrip(string.digits)
                     print('patron_pid: ', patron.pid)
-#                    patron.update(patron, dbcommit=True, reindex=True)
+                    # patron.update(patron, dbcommit=True, reindex=True)
