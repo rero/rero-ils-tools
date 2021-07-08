@@ -43,6 +43,8 @@ model.json: {
 ### To list duplicate emails in database
 ```bash
 poetry run tools.py tools patrons duplicate_emails
+poetry run tools.py tools patrons fix_patron_emails
+
 ```
 
 [repo]: https://github.com/rero/rero-ils-tools
