@@ -54,10 +54,10 @@ def fix_patron_emails(verbose):
             data['email'] = None
             if not data.get('keep_history'):
                 data['keep_history'] = True
-            # user.update(data)
+            user.update(data)
             for patron in Patron.get_patrons_by_user(user.user):
                 if patron.get('patron') and not patron.get(
                     'patron', {}).get('additional_communication_email'):
                     patron['patron']['additional_communication_email'] = email.rstrip(string.digits)
                     print('patron_pid: ', patron.pid)
-                    # patron.update(patron, dbcommit=True, reindex=True)
+                    patron.update(patron, dbcommit=True, reindex=True)
