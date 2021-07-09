@@ -42,22 +42,27 @@ def fix_patron_emails(verbose):
     
     out_file = JsonWriter('list_patrons_with_emails_to_fix.json')
 
+    
     for pid in Patron.get_all_pids():
         patron = Patron.get_record_by_pid(pid)
         user_id = patron.get('user_id')
         print('user_id: ', user_id)
         user = User.get_by_id(user_id)
-        data = user.dumpsMetadata()
-        email = data.get('email')
-        if email and email[-1].isdigit():
-            out_file.write(data)
-            data['email'] = None
-            if not data.get('keep_history'):
-                data['keep_history'] = True
-            user.update(data)
-            for patron in Patron.get_patrons_by_user(user.user):
-                if patron.get('patron') and not patron.get(
-                    'patron', {}).get('additional_communication_email'):
-                    patron['patron']['additional_communication_email'] = email.rstrip(string.digits)
-                    print('patron_pid: ', patron.pid)
-                    patron.update(patron, dbcommit=True, reindex=True)
+        try:
+            data = user.dumpsMetadata()
+            email = data.get('email')
+            if email and email[-1].isdigit():
+                out_file.write(data)
+                data['email'] = None
+                if not data.get('keep_history'):
+                    data['keep_history'] = True
+                user.update(data)
+                for patron in Patron.get_patrons_by_user(user.user):
+                    if patron.get('patron') and not patron.get(
+                        'patron', {}).get('additional_communication_email'):
+                        patron['patron']['additional_communication_email'] = email.rstrip(string.digits)
+                        print('patron_pid: ', patron.pid)
+                        patron.update(patron, dbcommit=True, reindex=True)
+        except Exception as err:
+            click.echo(err)
+            click.echo(f'ERROR: Can not extract record pid:{pid}')
