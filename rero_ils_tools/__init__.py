@@ -27,6 +27,7 @@ from .cli.items.replace import items_replace
 from .cli.items.update import items_update
 from .cli.patrons.duplicate_emails import duplicate_emails
 from .cli.patrons.fix_patron_emails import fix_patron_emails
+from .cli.patrons.validate_checkouts import validate_checkouts
 from .cli.query.query import records_query
 from .cli.update.circ_category import set_circulation_category
 
@@ -71,3 +72,4 @@ replace.add_command(items_replace)
 search.add_command(records_query)
 patrons.add_command(duplicate_emails)
 patrons.add_command(fix_patron_emails)
+patrons.add_command(validate_checkouts)
