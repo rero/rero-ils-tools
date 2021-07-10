@@ -20,14 +20,14 @@
 
 from __future__ import absolute_import, print_function
 
-import string
 import json
+import string
 
 import click
 from flask import current_app
 from flask.cli import with_appcontext
 from rero_ils.modules.items.api import Item
-from rero_ils.modules.utils import JsonWriter
+from rero_ils.modules.utils import JsonWriter, extracted_data_from_ref
 
 
 @click.command('validate_checkouts')
@@ -42,7 +42,9 @@ def validate_checkouts(infile, verbose):
     """
     click.secho(f'Validating Virtua checkouts', fg='green')
     
-    out_file = JsonWriter('virtua_transactions_not_yet_loaded.json')
+    vs_file = JsonWriter('virtua_transactions_not_yet_loaded_vs.json')
+    bulle_file = JsonWriter('virtua_transactions_not_yet_loaded_bulle.json')
+    nj_file = JsonWriter('virtua_transactions_not_yet_loaded_nj.json')
     with open(infile) as infile_filename:
         transactions = json.load(infile_filename)
         for transaction in transactions:
@@ -52,7 +54,14 @@ def validate_checkouts(infile, verbose):
                 item = Item.get_record_by_pid(item_pid)
                 if item.get('status') != 'on_loan':
                     print('missing on_loan status')
-                    # item['status'] = 'on_loan'
-                    # item.update(item, dbcommit=True, reindex=True)
+                    item['status'] = 'on_loan'
+                    item.update(item, dbcommit=True, reindex=True)
             else:
-                out_file.write(transaction)
+                org_pid = extracted_data_from_ref(
+                    transaction.get('organisation').get('$ref'))
+                if int(org_pid) == 1:
+                    bulle_file.write(transaction)
+                elif int(org_pid) == 2:
+                    vs_file.write(transaction)
+                elif int(org_pid) == 3:
+                    nj_file.write(transaction)
