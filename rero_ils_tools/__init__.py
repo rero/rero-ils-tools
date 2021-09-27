@@ -30,46 +30,55 @@ from .cli.patrons.fix_patron_emails import fix_patron_emails
 from .cli.patrons.validate_checkouts import validate_checkouts
 from .cli.query.query import records_query
 from .cli.update.circ_category import set_circulation_category
+from .cli.delete.bibliomedia import bibliomedia
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
 def tools_cli():
     """All app commands."""
-    pass
+
 
 @tools_cli.group()
 def tools():
-    """New tools group."""
-    pass
+    """Tools commands."""
+
 
 @tools.group()
 def update():
-    """New update group."""
-    pass
+    """Update commands."""
+
 
 @tools.group()
 def replace():
-    """New update group."""
-    pass
+    """Replace commands."""
 
 
 @tools.group()
 def search():
-    """New query group."""
-    pass
+    """Search commands."""
+
 
 @tools.group()
 def patrons():
-    """New patrons group."""
-    pass
+    """Patrons commands."""
+
+
+@tools.group()
+def delete():
+    """Delete commands."""
+
 
 tools.add_command(app)
-update.add_command(set_circulation_category)
 
+update.add_command(set_circulation_category)
 update.add_command(items_update)
+
 replace.add_command(items_replace)
 
 search.add_command(records_query)
+
 patrons.add_command(duplicate_emails)
 patrons.add_command(fix_patron_emails)
 patrons.add_command(validate_checkouts)
+
+delete.add_command(bibliomedia)

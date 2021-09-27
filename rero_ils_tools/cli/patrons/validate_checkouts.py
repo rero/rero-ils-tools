@@ -49,6 +49,7 @@ def validate_checkouts(infile, verbose):
         transactions = json.load(infile_filename)
         for transaction in transactions:
             item_pid = transaction.get('item_pid')
+            print('item_pid', item_pid)
             on_loan_loan = Item.get_loan_pid_with_item_on_loan(item_pid) 
             if on_loan_loan:
                 item = Item.get_record_by_pid(item_pid)
