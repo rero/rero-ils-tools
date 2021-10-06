@@ -22,15 +22,16 @@ import click
 from flask.cli import FlaskGroup
 from invenio_app.factory import create_app
 
+from .cli.delete.bibliomedia import bibliomedia
 from .cli.example import app
 from .cli.items.replace import items_replace
 from .cli.items.update import items_update
+from .cli.migration.clean_templates import clean_templates
 from .cli.patrons.duplicate_emails import duplicate_emails
 from .cli.patrons.fix_patron_emails import fix_patron_emails
 from .cli.patrons.validate_checkouts import validate_checkouts
 from .cli.query.query import records_query
 from .cli.update.circ_category import set_circulation_category
-from .cli.delete.bibliomedia import bibliomedia
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -68,8 +69,14 @@ def delete():
     """Delete commands."""
 
 
+@tools.group()
+def migration():
+    """Migration commands."""
+
+
 tools.add_command(app)
 
+migration.add_command(clean_templates)
 update.add_command(set_circulation_category)
 update.add_command(items_update)
 
