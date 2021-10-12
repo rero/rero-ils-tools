@@ -17,7 +17,7 @@ export PATH=${PATH}:${PYTHONPATH}/scripts/
 ### For PODs
 
 ```bash
-export PYTHONPATH=/data/nfs/ils/rero-ils-tools/
+export PYTHONPATH=/network/nfs/data_ils/ils/rero-ils-tools
 export PATH=${PATH}:${PYTHONPATH}/scripts/
 ```
 
