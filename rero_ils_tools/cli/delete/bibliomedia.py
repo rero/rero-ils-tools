@@ -30,6 +30,7 @@ from rero_ils.modules.documents.api import Document
 from rero_ils.modules.holdings.api import Holding
 from rero_ils.modules.items.api import Item, ItemsSearch
 from rero_ils.modules.local_fields.api import LocalField, LocalFieldsSearch
+from rero_ils.modules.operation_logs.api import OperationLogsSearch
 from rero_ils.modules.utils import JsonWriter
 
 
@@ -81,6 +82,13 @@ def local_field_to_change(locf, doc, collection):
     doc.reindex()
 
 
+def get_bibliomedia_id(document):
+    """Get bibliomedia id from document."""
+    for identified_by in document.get('identifiedBy', []):
+        if identified_by.get('source') == 'BIBLIOMEDIA':
+            return identified_by.get('value')
+
+
 @click.command()
 @click.argument('collection')
 @click.option('-s', '--save', default=None, help='Directory for saving files.')
@@ -107,8 +115,8 @@ def bibliomedia(collection, save, delete, verbose):
             os.path.join(save, f'items_error_{timestamp}.json'))
         locf_error_file = JsonWriter(
             os.path.join(save, f'local_fields_error_{timestamp}.json'))
-        errors = open(
-            os.path.join(save, f'errors_{timestamp}.log'), 'w')
+        info = open(
+            os.path.join(save, f'info_{timestamp}.log'), 'w')
 
     # if there is a - in the collection name the elastic search is not working.
     collection_split = collection.split('-')
@@ -137,16 +145,29 @@ def bibliomedia(collection, save, delete, verbose):
         for item_pid in item_pids:
             item = Item.get_record_by_pid(item_pid)
             reasons_not_to_delete = item.reasons_not_to_delete()
+            checkout_count = item.get('legacy_checkout_count', 0)
+            checkout_count += OperationLogsSearch() \
+                .filter('term', record__type='loan') \
+                .filter('term', loan__item__pid=hit.pid) \
+                .filter('term', loan__trigger='checkout'). \
+                count()
+            msg = (f'Document id: {get_bibliomedia_id(document)}\t'
+                   f'item barcode: {item.get("barcode")}\t'
+                   f'checkout count: {checkout_count}')
+            click.echo(msg)
+            if save:
+                info.write(msg + '\n')
+
             if reasons_not_to_delete:
                 do_not_delete = True
-                msg = (f'CAN NOT DELETE:\t'
-                       f'document:{document_pid}\t'
-                       f'item: pid:{item_pid} barcode:{item.get("barcode")}\t'
+                msg = (f'  CAN NOT DELETE:\t'
+                       f'document pid: {document_pid}\t'
+                       f'item: pid: {item_pid}\t'
                        f'{reasons_not_to_delete}')
                 if not verbose:
                     click.echo(msg)
                 if save:
-                    errors.write(msg + '\n')
+                    info.write(msg + '\n')
             items.append({
                 'item': item,
                 'reasons_not_to_delete': reasons_not_to_delete
@@ -217,4 +238,7 @@ def bibliomedia(collection, save, delete, verbose):
                 for local_field in local_fields:
                     local_field_to_change(local_field, document, collection)
 
-    click.echo(f'Count: {idx}, Delete: {delete_count}')
+    msg = f'Count: {idx}, Deleted: {delete_count}'
+    click.echo(msg)
+    if save:
+        info.write(msg + '/n')
