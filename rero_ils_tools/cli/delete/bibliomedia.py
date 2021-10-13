@@ -118,7 +118,7 @@ def bibliomedia(collection, save, delete, verbose):
 
     query = ItemsSearch() \
         .filter('term', notes__type='staff_note') \
-        .filter('term', notes__content=search_collection)
+        .filter('match', notes__content=search_collection)
     # group by documents
     document_items = {}
     for hit in query.source(['pid', 'document']).scan():
@@ -160,21 +160,25 @@ def bibliomedia(collection, save, delete, verbose):
             .query('bool', filter=query_filters)\
             .source(['pid'])
 
+        local_fields = []
         for hit in query.scan():
             local_field_pid = hit.pid
             local_field = LocalField.get_record_by_pid(local_field_pid)
+            local_fields.append(local_field)
 
         if save:
             if do_not_delete:
                 doc_error_file.write(document)
                 for item in items:
                     item_error_file.write(item['item'])
-                locf_error_file.write(local_field)
+                for local_field in local_fields:
+                    locf_error_file.write(local_field)
             else:
                 doc_file.write(document)
                 for item in items:
                     item_file.write(item['item'])
-                locf_file.write(local_field)
+                for local_field in local_fields:
+                    locf_error_file.write(local_field)
         if verbose:
             color = 'reset'
             if do_not_delete:
@@ -182,32 +186,35 @@ def bibliomedia(collection, save, delete, verbose):
             click.echo(idx)
             click.secho(
                 f'\tdocument    :{document_pid} '
-                f'{document["adminMetadata"]["note"]}',
+                f"{document['adminMetadata']['note']}",
                 fg=color
             )
             for item in items:
                 msg = item["reasons_not_to_delete"] or ''
                 click.secho(
-                    f'\titem        :{item["item"]["pid"]} '
-                    f'barcode:{item["item"]["barcode"]} '
-                    f'{item["item"]["notes"]} '
+                    f"\titem        :{item['item']['pid']} "
+                    f"barcode:{item['item']['barcode']} "
+                    f"{item['item']['notes']} "
                     f'{msg}',
                     fg=color
                 )
-            click.secho(
-                f'\tlocal field : {local_field_pid} '
-                f'{local_field["fields"]["field_1"]}',
-                fg=color
-            )
-            if not do_not_delete:
-                delete_count += 1
+            for local_field in local_fields:
+                click.secho(
+                    f"\tlocal field : {local_field['pid']} "
+                    f"{local_field['fields']['field_1']}",
+                    fg=color
+                )
 
+        if not do_not_delete:
+            delete_count += 1
         if delete and not do_not_delete:
             for item in items:
                 delete_record(item['item'], verbose)
             if delete_record(document, verbose):
-                delete_record(local_field, verbose)
+                for local_field in local_fields:
+                    delete_record(local_field, verbose)
             else:
-                local_field_to_change(local_field, document, collection)
+                for local_field in local_fields:
+                    local_field_to_change(local_field, document, collection)
 
     click.echo(f'Count: {idx}, Delete: {delete_count}')
