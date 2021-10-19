@@ -116,7 +116,7 @@ def bibliomedia(collection, save, delete, verbose):
         locf_error_file = JsonWriter(
             os.path.join(save, f'local_fields_error_{timestamp}.json'))
         info = open(
-            os.path.join(save, f'info_{timestamp}.log'), 'w')
+            os.path.join(save, f'{collection}_{timestamp}.log'), 'w')
 
     # if there is a - in the collection name the elastic search is not working.
     collection_split = collection.split('-')
@@ -136,6 +136,7 @@ def bibliomedia(collection, save, delete, verbose):
 
     idx = 0
     delete_count = 0
+    checkouts_count = 0
     for idx, document_pid in enumerate(document_items, 1):
         do_not_delete = False
         item_pids = document_items[document_pid]
@@ -154,6 +155,7 @@ def bibliomedia(collection, save, delete, verbose):
             msg = (f'Document id: {get_bibliomedia_id(document)}\t'
                    f'item barcode: {item.get("barcode")}\t'
                    f'checkout count: {checkout_count}')
+            checkouts_count += checkout_count
             click.echo(msg)
             if save:
                 info.write(msg + '\n')
@@ -199,7 +201,7 @@ def bibliomedia(collection, save, delete, verbose):
                 for item in items:
                     item_file.write(item['item'])
                 for local_field in local_fields:
-                    locf_error_file.write(local_field)
+                    locf_file.write(local_field)
         if verbose:
             color = 'reset'
             if do_not_delete:
@@ -238,7 +240,7 @@ def bibliomedia(collection, save, delete, verbose):
                 for local_field in local_fields:
                     local_field_to_change(local_field, document, collection)
 
-    msg = f'Count: {idx}, Deleted: {delete_count}'
+    msg = f'Count: {idx}, Deleted: {delete_count}, Checkouts: {checkouts_count}'
     click.echo(msg)
     if save:
         info.write(msg + '/n')

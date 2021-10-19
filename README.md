@@ -10,7 +10,7 @@ RERO ILS misc tools for data manipulation.
 2. Set the environment variables:
 
 ```bash
-export PYTHONPATH=~/rero-ils-tools 
+export PYTHONPATH=~/rero-ils-tools
 export PATH=${PATH}:${PYTHONPATH}/scripts/
 ```
 
