@@ -78,7 +78,7 @@ def local_field_to_change(locf, doc, collection):
     if locf['fields']:
         locf.update(data=locf, dbcommit=True, reindex=True)
     else:
-        locf.delete(dbcommit=True, reindex=True)
+        locf.delete(dbcommit=True, delindex=True)
     doc.reindex()
 
 
@@ -243,4 +243,4 @@ def bibliomedia(collection, save, delete, verbose):
     msg = f'Count: {idx}, Deleted: {delete_count}, Checkouts: {checkouts_count}'
     click.echo(msg)
     if save:
-        info.write(msg + '/n')
+        info.write(msg + '\n')
