@@ -149,20 +149,19 @@ def bibliomedia(collection, save, delete, verbose):
             checkout_count = item.get('legacy_checkout_count', 0)
             checkout_count += OperationLogsSearch() \
                 .filter('term', record__type='loan') \
-                .filter('term', loan__item__pid=hit.pid) \
-                .filter('term', loan__trigger='checkout'). \
-                count()
-            msg = (f'Document id: {get_bibliomedia_id(document)}\t'
-                   f'item barcode: {item.get("barcode")}\t'
-                   f'checkout count: {checkout_count}')
+                .filter('term', loan__item__pid=item_pid) \
+                .filter('term', loan__trigger='checkout') \
+                .count()
             checkouts_count += checkout_count
-            click.echo(msg)
-            if save:
-                info.write(msg + '\n')
 
             if reasons_not_to_delete:
+                msg = (f'{idx}\tDocument id: {get_bibliomedia_id(document)}\t'
+                        f'item barcode: {item.get("barcode")}\t'
+                        f'checkout count: {checkout_count}')
+                if not verbose:
+                    click.echo(msg)
                 do_not_delete = True
-                msg = (f'  CAN NOT DELETE:\t'
+                msg = (f'\tCAN NOT DELETE:\t'
                        f'document pid: {document_pid}\t'
                        f'item: pid: {item_pid}\t'
                        f'{reasons_not_to_delete}')
@@ -189,8 +188,17 @@ def bibliomedia(collection, save, delete, verbose):
             local_field = LocalField.get_record_by_pid(local_field_pid)
             local_fields.append(local_field)
 
+        msg = (f'{idx}\tDocument id: {get_bibliomedia_id(document)}\t'
+               f'item barcode: {item.get("barcode")}\t'
+               f'checkout count: {checkout_count}')
+        can_not_delete_msg = (f'\tCAN NOT DELETE:\t'
+                f'document pid: {document_pid}\t'
+                f'item: pid: {item_pid}\t'
+                f'{reasons_not_to_delete}')
         if save:
             if do_not_delete:
+                info.write(msg + '\n')
+                info.write(can_not_delete_msg + '\n')
                 doc_error_file.write(document)
                 for item in items:
                     item_error_file.write(item['item'])
@@ -203,14 +211,13 @@ def bibliomedia(collection, save, delete, verbose):
                 for local_field in local_fields:
                     locf_file.write(local_field)
         if verbose:
-            color = 'reset'
+            click.echo(msg)
             if do_not_delete:
-                color = 'yellow'
-            click.echo(idx)
+                click.secho(can_not_delete_msg, fg='red')
             click.secho(
                 f'\tdocument    :{document_pid} '
                 f"{document['adminMetadata']['note']}",
-                fg=color
+                fg='yellow'
             )
             for item in items:
                 msg = item["reasons_not_to_delete"] or ''
@@ -219,13 +226,13 @@ def bibliomedia(collection, save, delete, verbose):
                     f"barcode:{item['item']['barcode']} "
                     f"{item['item']['notes']} "
                     f'{msg}',
-                    fg=color
+                    fg='yellow'
                 )
             for local_field in local_fields:
                 click.secho(
-                    f"\tlocal field : {local_field['pid']} "
+                    f"\tlocal field :{local_field['pid']} "
                     f"{local_field['fields']['field_1']}",
-                    fg=color
+                    fg='yellow'
                 )
 
         if not do_not_delete:
