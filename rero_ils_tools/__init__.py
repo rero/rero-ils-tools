@@ -23,6 +23,7 @@ from flask.cli import FlaskGroup
 from invenio_app.factory import create_app
 
 from .cli.delete.bibliomedia import bibliomedia
+from .cli.desherbage.vs import vs
 from .cli.example import app
 from .cli.items.replace import items_replace
 from .cli.items.update import items_update
@@ -74,6 +75,11 @@ def migration():
     """Migration commands."""
 
 
+@tools.group()
+def desherbage():
+    """Desherbage commands."""
+
+
 tools.add_command(app)
 
 migration.add_command(clean_templates)
@@ -89,3 +95,6 @@ patrons.add_command(fix_patron_emails)
 patrons.add_command(validate_checkouts)
 
 delete.add_command(bibliomedia)
+
+desherbage.add_command(vs)
+

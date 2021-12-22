@@ -46,5 +46,11 @@ poetry run tools.py tools patrons duplicate_emails
 poetry run tools.py tools patrons fix_patron_emails
 
 ```
+### To manage desherbage for a library
+```bash
+poetry run tools.py tools desherbage vs  <item_barcodes_file> -l <library_pid> -c <library_code> -s <output_directory>
+
+```
+
 
 [repo]: https://github.com/rero/rero-ils-tools
