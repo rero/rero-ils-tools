@@ -75,6 +75,19 @@ def get_document_local_fields(document_pid, org_pid):
     return local_fields
 
 
+def delete_library_code(data, text_1, text_2):
+    """Delete the library code from local fields."""
+    data_field = None
+    fields = data.split(" | ")
+    for record in fields:
+        if text_1 in record or text_2 in record:
+            fields.remove(record)
+    if fields:
+        data_field = ' | '.join([
+            str(elem) for elem in fields])
+    return data_field
+
+
 def update_local_fields(
         local_fields, library_code, document, docs_file,
         local_fields_list, document_pid):
@@ -90,7 +103,11 @@ def update_local_fields(
                 docs_file.write(document)
                 msg = f"{document_pid}: {record.pid}: {record['fields'][field]}"
                 local_fields_list.write(msg + '\n')
-                del record['fields'][field]
+                field_data = delete_library_code(data_field, text_1, text_2)
+                if not field_data:
+                    del record['fields'][field]
+                else:
+                    record['fields'][field] = [field_data]
         if len(record.get('fields', {}).keys()):
             record.update(record, dbcommit=True, reindex=True)
         else:
