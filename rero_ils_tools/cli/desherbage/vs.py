@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # RERO ILS
-# Copyright (C) 2021 RERO
+# Copyright (C) 2022 RERO
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -77,26 +77,39 @@ def get_document_local_fields(document_pid, org_pid):
 
 def delete_library_code(data, text_1, text_2):
     """Delete the library code from local fields."""
-    data_field = None
-    fields = data.split(" | ")
-    for record in fields:
-        if text_1 in record or text_2 in record:
-            fields.remove(record)
-    if fields:
-        data_field = ' | '.join([
-            str(elem) for elem in fields])
+    data_field = ''
+    if f'$2 {text_2}' in data:
+        dollar_2 = data.split('$2')
+        for a in dollar_2:
+            if text_2 in a:
+                dollar_2.remove(a)
+        if len(dollar_2) > 1:
+            for a in dollar_2:
+                if a == '':
+                    a = '$2'
+                data_field += a
+    elif f'$a {text_1}' in data:
+        dollar_a = data.split('$a')
+        for a in dollar_a:
+            if text_1 in a:
+                dollar_a.remove(a)
+        if len(dollar_a) > 1:
+            for a in dollar_a:
+                if a == '':
+                    a = '$a'
+                data_field += a
     return data_field
 
 
 def update_local_fields(
         local_fields, library_code, document, docs_file,
-        local_fields_list, document_pid):
+        local_fields_list, document_pid, dbcommit, reindex):
     """Delete library code from local fields."""
     for record in local_fields:
         fields = list(record.get('fields', {}).keys())
         for field in fields:
-            text_1 = f'$a {library_code}'
-            text_2 = f'$2 cdu-{library_code}'
+            text_1 = f'{library_code}'
+            text_2 = f'cdu-{library_code}'
             data_field = ' '.join([
                 str(elem) for elem in record['fields'][field]])
             if text_1 in data_field or text_2 in data_field:
@@ -109,9 +122,9 @@ def update_local_fields(
                 else:
                     record['fields'][field] = [field_data]
         if len(record.get('fields', {}).keys()):
-            record.update(record, dbcommit=True, reindex=True)
+            record.update(record, dbcommit=dbcommit, reindex=reindex)
         else:
-            record.delete(record, dbcommit=True, delindex=True)
+            record.delete(record, dbcommit=dbcommit, delindex=reindex)
 
 
 def number_of_items(library_pid, document_pid):
@@ -128,11 +141,18 @@ def number_of_items(library_pid, document_pid):
     
 def manage_documents(
         library_pid, document_pids, info, docs_file, docs_list, org_pid,
-        library_code, local_fields_list):
+        library_code, local_fields_list, dbcommit, reindex):
     """Update document if needed."""
     for document_pid in document_pids:
         document = Document.get_record_by_pid(document_pid)
+        to_print = False
+        seriesStatement = document.get('seriesStatement', [])
+        for statement in seriesStatement:
+            if statement.get('seriesEnumeration'):
+                to_print = True
         if document.get('partOf'):
+            to_print = True
+        if to_print:
             sort_title = title_format_text_head(
                 document.get('title', []),
                 with_subtitle=True
@@ -143,7 +163,7 @@ def manage_documents(
             local_fields = get_document_local_fields(document_pid, org_pid)
             update_local_fields(
                 local_fields, library_code, document, docs_file,
-                local_fields_list, document_pid)
+                local_fields_list, document_pid, dbcommit, reindex)
 
 
 def manage_holdings(holding_pids, info, holdings_list):
@@ -157,13 +177,14 @@ def manage_holdings(holding_pids, info, holdings_list):
 
 @click.command('vs')
 @click.argument('infile', type=click.File('r'))
+@click.option('-n', '--noupdate', is_flag=True, default=True,help='No Update.')
 @click.option('-l', '--library_pid', required=True, help='Library PID.')
 @click.option('-c', '--library_code', required=True, help='Library code.')
 @click.option('-s', '--save', required=True, help='Directory to saving files.')
 @click.option('-v', '--verbose', is_flag=True, default=False,help='Verbose.')
 @with_appcontext
 def vs(
-        infile, library_pid, library_code, save, verbose):
+        infile, noupdate, library_pid, library_code, save, verbose):
     """Delete library items.
 
     infile: Text file contains the item barcodes to delete.
@@ -171,6 +192,10 @@ def vs(
     :param library_code: The code of the library.
     :param save: The directory where to save output files.
     """
+    dbcommit, reindex = True, True
+    if not noupdate:
+        dbcommit = False
+        reindex = False
     library = validate_inputs(library_pid, save)
     click.secho(f'Delete items for library: {library.get("name")}', fg='red')
 
@@ -179,7 +204,7 @@ def vs(
         os.path.join(save, f'documents_{timestamp}.json'))
     items_file = JsonWriter(os.path.join(save, f'items_{timestamp}.json'))
     docs_list = open(
-        os.path.join(save, f'documents_part_of_{timestamp}.txt'), 'w')
+        os.path.join(save, f'documents_partof_seriesStatement_{timestamp}.txt'), 'w')
     holdings_list = open(
         os.path.join(save, f'holding_serials_{timestamp}.txt'), 'w')
     info = open(os.path.join(save, f'vs_log_{timestamp}.log'), 'w')
@@ -188,11 +213,8 @@ def vs(
 
     org_pid = library.organisation_pid
     barcodes = infile.readlines()
-    holding_pids = []
-    document_pids = []
-    items_not_in_db = 0
-    items_not_deleted = 0
-    items_deleted = 0
+    holding_pids, document_pids = [], []
+    items_not_in_db, items_not_deleted, items_deleted = 0, 0, 0
     for idx, line in enumerate(barcodes, 1):
         barcode = line.rstrip()
         item = Item.get_item_by_barcode(barcode, org_pid)
@@ -212,7 +234,7 @@ def vs(
             holding_pid = item.holding_pid
             try:
                 items_file.write(item)
-                item.delete(item, dbcommit=True, delindex=True)
+                item.delete(item, dbcommit=dbcommit, delindex=reindex)
                 items_deleted += 1
                 msg = (f'Item barcode: "{barcode}" deleted from database.')
                 write_to_log_file(msg, info)
@@ -226,7 +248,7 @@ def vs(
     manage_holdings(list(set(holding_pids)), info, holdings_list)
     manage_documents(
         library_pid, list(set(document_pids)), info, docs_file, docs_list,
-        org_pid, library_code, local_fields_list)
+        org_pid, library_code, local_fields_list, dbcommit, reindex)
     count = f'Count: {idx}'
     deleted = f', Deleted: {items_deleted}'
     not_in_db = f', Not in DB: {items_not_in_db}'
