@@ -157,7 +157,12 @@ def manage_documents(
                 document.get('title', []),
                 with_subtitle=True
             )
-            msg = f'{document.pid}: {sort_title}'
+            links = ''
+            for part in document.get('partOf'):
+                link = part.get('document', {}).get('$ref')
+                if link:
+                    links = f"{links} {link}"
+            msg = f'{document.pid}: {links} | {sort_title}'
             docs_list.write(msg + '\n')
         if not number_of_items(library_pid, document_pid):
             local_fields = get_document_local_fields(document_pid, org_pid)
