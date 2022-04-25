@@ -137,8 +137,23 @@ def number_of_items(library_pid, document_pid):
         .query('bool', filter=query_filters)\
         .source(['pid'])
     return query.count()
-    
-    
+
+
+def delete_documents(document_pids, deleted_docs_file):
+    """Attempt to delete documents."""
+    for document_pid in document_pids:
+        document = Document.get_record_by_pid(document_pid)
+        can, _ = document.can_delete
+        if can:
+            deleted_docs_file.write(document)
+            try:
+                document.delete(document, dbcommit=True, delindex=True)
+            except Exception as error:
+                click.echo(error)
+                click.echo(
+                    f'ERROR: Unable to delete document_pid:{document_pid}')
+                
+
 def manage_documents(
         library_pid, document_pids, info, docs_file, docs_list, org_pid,
         library_code, local_fields_list, dbcommit, reindex):
@@ -208,9 +223,12 @@ def vs(
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     docs_file = JsonWriter(
         os.path.join(save, f'documents_{timestamp}.json'))
+    deleted_docs_file = JsonWriter(
+        os.path.join(save, f'deleted_documents_{timestamp}.json'))
     items_file = JsonWriter(os.path.join(save, f'items_{timestamp}.json'))
     docs_list = open(
-        os.path.join(save, f'documents_partof_seriesStatement_{timestamp}.txt'), 'w')
+        os.path.join(
+            save, f'documents_partof_seriesStatement_{timestamp}.txt'), 'w')
     holdings_list = open(
         os.path.join(save, f'holding_serials_{timestamp}.txt'), 'w')
     info = open(os.path.join(save, f'vs_log_{timestamp}.log'), 'w')
@@ -255,6 +273,7 @@ def vs(
     manage_documents(
         library_pid, list(set(document_pids)), info, docs_file, docs_list,
         org_pid, library_code, local_fields_list, dbcommit, reindex)
+    delete_documents(document_pids, deleted_docs_file)
     count = f'Count: {idx}'
     deleted = f', Deleted: {items_deleted}'
     not_in_db = f', Not in DB: {items_not_in_db}'
