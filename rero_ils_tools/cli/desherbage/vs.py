@@ -143,15 +143,16 @@ def delete_documents(document_pids, deleted_docs_file):
     """Attempt to delete documents."""
     for document_pid in document_pids:
         document = Document.get_record_by_pid(document_pid)
-        can, _ = document.can_delete
-        if can:
-            deleted_docs_file.write(document)
-            try:
-                document.delete(document, dbcommit=True, delindex=True)
-            except Exception as error:
-                click.echo(error)
-                click.echo(
-                    f'ERROR: Unable to delete document_pid:{document_pid}')
+        if document:
+            can, _ = document.can_delete
+            if can:
+                deleted_docs_file.write(document)
+                try:
+                    document.delete(document, dbcommit=True, delindex=True)
+                except Exception as error:
+                    click.echo(error)
+                    click.echo(
+                        f'ERROR: Unable to delete document_pid:{document_pid}')
                 
 
 def manage_documents(
@@ -273,7 +274,7 @@ def vs(
     manage_documents(
         library_pid, list(set(document_pids)), info, docs_file, docs_list,
         org_pid, library_code, local_fields_list, dbcommit, reindex)
-    delete_documents(document_pids, deleted_docs_file)
+    delete_documents(list(set(document_pids)), deleted_docs_file)
     count = f'Count: {idx}'
     deleted = f', Deleted: {items_deleted}'
     not_in_db = f', Not in DB: {items_not_in_db}'
