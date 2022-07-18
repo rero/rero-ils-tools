@@ -54,7 +54,6 @@ def write_to_log_file(msg, info):
     """Write information into log file."""
     click.echo(msg)
     info.write(msg + '\n')
-    info.flush()
 
 
 def get_document_local_fields(document_pid, org_pid):
@@ -115,10 +114,8 @@ def update_local_fields(
                 str(elem) for elem in record['fields'][field]])
             if text_1 in data_field or text_2 in data_field:
                 docs_file.write(document)
-                docs_file.flush()
                 msg = f"{document_pid}: {record.pid}: {record['fields'][field]}"
                 local_fields_list.write(msg + '\n')
-                local_fields_list.flush()
                 field_data = delete_library_code(data_field, text_1, text_2)
                 if not field_data:
                     del record['fields'][field]
@@ -150,7 +147,6 @@ def delete_documents(document_pids, deleted_docs_file):
             can, _ = document.can_delete
             if can:
                 deleted_docs_file.write(document)
-                deleted_docs_file.flush()
                 try:
                     document.delete(document, dbcommit=True, delindex=True)
                 except Exception as error:
@@ -185,7 +181,6 @@ def manage_documents(
                         links = f"{links} {link}"
             msg = f'{document.pid}: {links} | {sort_title}'
             docs_list.write(msg + '\n')
-            docs_list.flush()
         if not number_of_items(library_pid, document_pid):
             local_fields = get_document_local_fields(document_pid, org_pid)
             update_local_fields(
@@ -200,7 +195,6 @@ def manage_holdings(holding_pids, info, holdings_list):
         if holding and holding.holdings_type == 'serial':
             msg = f'{holding.pid}'
             holdings_list.write(msg + '\n')
-            holdings_list.flush()
 
 
 @click.command('vs')
@@ -265,7 +259,6 @@ def vs(
             holding_pid = item.holding_pid
             try:
                 items_file.write(item)
-                items_file.flush()
                 item.delete(item, dbcommit=dbcommit, delindex=reindex)
                 items_deleted += 1
                 msg = (f'Item barcode: "{barcode}" deleted from database.')
