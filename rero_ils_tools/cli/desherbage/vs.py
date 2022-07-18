@@ -272,8 +272,12 @@ def vs(
                 write_to_log_file(msg, info)
                 holding_pids.append(holding_pid)
                 document_pids.append(document_pid)
-            except Exception as error:
+            except IlsRecordError.NotDeleted:
                 msg = (f'Item barcode: "{barcode}" unable to delete.')
+                write_to_log_file(msg, info)
+                items_not_deleted += 1
+            except Exception as error:
+                msg = (f'Item barcode: "{barcode}" unable to delete: {error}')
                 write_to_log_file(msg, info)
                 items_not_deleted += 1
     
